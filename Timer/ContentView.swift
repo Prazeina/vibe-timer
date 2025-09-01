@@ -46,6 +46,16 @@ enum Ringtone: String, CaseIterable, Identifiable {
         case .morning_flower: return "morning_flower.mp3"
         }
     }
+
+    // Base name without extension, used to resolve appropriate formats per context
+    var baseName: String {
+        switch self {
+        case .nature: return "nature"
+        case .lofi: return "lofi"
+        case .meditation: return "meditation"
+        case .morning_flower: return "morning_flower"
+        }
+    }
 }
 
 
@@ -413,8 +423,8 @@ struct ContentView: View {
         guard activeTimers.indices.contains(index) else { return }
         
         let timer = activeTimers[index]
-        guard let soundURL = Bundle.main.url(forResource: timer.ringtone.fileName, withExtension: nil) else {
-            print("Sound file not found: \(timer.ringtone.fileName)")
+        guard let resource = locateSoundResource(for: timer.ringtone) else {
+            print("Sound file not found for base: \(timer.ringtone.baseName)")
             return
         }
         
@@ -422,7 +432,7 @@ struct ContentView: View {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
             
-            let audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
+            let audioPlayer = try AVAudioPlayer(contentsOf: resource.url)
             audioPlayer.numberOfLoops = -1
             audioPlayer.play()
             activeTimers[index].audioPlayer = audioPlayer
@@ -435,8 +445,17 @@ struct ContentView: View {
         let content = UNMutableNotificationContent()
         content.title = timer.label
         content.body = "Time's up!"
-        content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: timer.ringtone.fileName))
+        // Prefer uncompressed formats for notification sound (.caf/.aiff/.wav). Fallback to default if unavailable
+        if let resource = locateSoundResource(for: timer.ringtone),
+           isNotificationSoundFormatAllowed(filename: resource.filename) {
+            content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: resource.filename))
+        } else {
+            content.sound = .default
+        }
         content.categoryIdentifier = "TIMER_ACTIONS"
+        if #available(iOS 15.0, *) {
+            content.interruptionLevel = .timeSensitive
+        }
         
         content.userInfo = [
             "totalSeconds": timer.totalSeconds,
@@ -456,6 +475,26 @@ struct ContentView: View {
     
     private func cancelNotification(for id: UUID) {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id.uuidString])
+    }
+
+    // MARK: - Sound Resolution Helpers
+    // Locate the best available audio resource for a ringtone.
+    // Returns URL and the filename (base.ext) for reuse in notifications.
+    private func locateSoundResource(for ringtone: Ringtone) -> (url: URL, filename: String)? {
+        // Prefer notification-compatible formats first for better consistency
+        let preferredExtensions = ["caf", "aiff", "aif", "wav", "mp3", "m4a"]
+        for ext in preferredExtensions {
+            if let url = Bundle.main.url(forResource: ringtone.baseName, withExtension: ext) {
+                return (url, "\(ringtone.baseName).\(ext)")
+            }
+        }
+        return nil
+    }
+
+    // Only certain formats are allowed for UNNotificationSound: .caf, .aiff/.aif, .wav
+    private func isNotificationSoundFormatAllowed(filename: String) -> Bool {
+        let lowercased = filename.lowercased()
+        return lowercased.hasSuffix(".caf") || lowercased.hasSuffix(".aiff") || lowercased.hasSuffix(".aif") || lowercased.hasSuffix(".wav")
     }
 }
 

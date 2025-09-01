@@ -26,9 +26,10 @@ The project is organized into the following key files:
 To get the project running correctly on your own device, follow these steps:
 1. Add Custom Sound Files
 The app will not ring unless you add your own audio files to the project.
-* Get Audio Files: Make sure you have sound files (e.g., nature.mp3, lofi.mp3) that are less than 30 seconds long.
+* Get Audio Files: Use short audio files (< 30s). For lock-screen notifications, iOS supports bundled sounds only with extensions: `.caf`, `.aiff`/`.aif`, or `.wav`. In-app playback also supports `.mp3`/`.m4a`.
 * Add to Xcode: Drag these files into your Xcode Project Navigator. When prompted, ensure "Copy items if needed" and your app's target are checked.
-* Verify Filenames: Make sure the filenames in your Ringtone enum inside ContentView.swift exactly match the files you added.
+* Verify Filenames: Ensure the base names in the `Ringtone` enum inside `ContentView.swift` match your files. Provide at least one notification-compatible file (e.g., `nature.caf`).
+* Time Sensitive: In iOS Settings → Notifications → vibe-timer, enable "Time Sensitive Notifications" so alerts can ring on the lock screen even during Focus modes.
 2. Enable Live Activities
 * In your project settings, go to the "Info" tab.
 * Add a new key called "Supports Live Activities" and set its value to "YES".
@@ -40,4 +41,4 @@ Live Activities require a separate Widget Extension target.
 * In the Target Membership for TimerActivityWidget.swift, make sure only the TimerWidget target is checked.
 4. Run the App
 * Connect your iPhone and select it as the run destination.
-* When you run the app for the first time, you must tap "Allow" on the notification permission pop-up
+* When you run the app for the first time, tap "Allow" on the notification permission pop-up. If alerts are not audible on the lock screen, verify that a `.caf`/`.aiff`/`.wav` file is present in the app bundle and that Time Sensitive is enabled.
