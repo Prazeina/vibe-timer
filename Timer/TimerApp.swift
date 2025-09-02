@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct TimerApp: App {
-    // Use the AppDelegateAdaptor to connect our delegate
+    // Add this line to connect your AppDelegate
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {

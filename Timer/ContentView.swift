@@ -1,7 +1,7 @@
 import SwiftUI
-import AVFoundation // Needed for playing sounds
-import UserNotifications // Required for background notifications
-import ActivityKit // Required for Live Activities
+import AVFoundation
+import UserNotifications
+import AudioToolbox
 
 // A struct to hold custom notification names, making them globally accessible
 struct AppNotificationNames {
@@ -18,7 +18,6 @@ struct ActiveTimer: Identifiable {
     var ringtone: Ringtone
     var audioPlayer: AVAudioPlayer?
     var isPaused: Bool = false
-    var activity: Activity<TimerActivityAttributes>? // Holds the Live Activity session
 }
 
 // A model for preset timers
@@ -37,7 +36,6 @@ enum Ringtone: String, CaseIterable, Identifiable {
     
     var id: String { self.rawValue }
     
-    // NOTE: You must add these sound files to your project for notifications to work.
     var fileName: String {
         switch self {
         case .nature: return "nature.mp3"
@@ -66,6 +64,13 @@ struct ContentView: View {
     
     // Timer to update the UI every second
     let uiUpdateTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
+    // Player for the silent audio track to keep the app alive in the background
+    @State private var silentPlayer: AVAudioPlayer?
+    
+    // Background task identifier
+    @State private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
+
 
     let ringDurations = [
         (label: "5 Seconds", value: 5.0),
@@ -216,12 +221,12 @@ struct ContentView: View {
                         Button(action: { startPresetTimer(preset: preset) }) {
                             HStack {
                                 Text(preset.label)
+                                    .foregroundColor(.primary)
                                 Spacer()
                                 Text(formatTime(seconds: preset.durationInSeconds))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                             }
                         }
-                        .foregroundColor(.white)
                     }
                 }
             }
@@ -231,6 +236,59 @@ struct ContentView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: AppNotificationNames.restartTimer)) { notification in
                 handleRestartNotification(from: notification)
+            }
+            .onAppear {
+                checkNotificationPermissions()
+            }
+            .onChange(of: scenePhase) { newPhase in
+                switch newPhase {
+                case .background:
+                    if !activeTimers.isEmpty {
+                        print("App going to background, playing silent sound to keep alive")
+                        playSilentSound()
+                    }
+                case .active:
+                    print("App becoming active, stopping silent sound")
+                    silentPlayer?.stop()
+                    
+                    // End any background task when app becomes active
+                    if backgroundTaskID != .invalid {
+                        UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                        backgroundTaskID = .invalid
+                    }
+                    
+                    // Reconfigure audio session when app becomes active
+                    if !activeTimers.isEmpty {
+                        do {
+                            let audioSession = AVAudioSession.sharedInstance()
+                            try audioSession.setCategory(.playback, mode: .default, options: [])
+                            try audioSession.setActive(true)
+                            print("Audio session reconfigured when app became active")
+                            
+                            // Try to play any sounds that failed while backgrounded
+                            for (index, timer) in activeTimers.enumerated() {
+                                if timer.audioPlayer == nil && timer.remainingSeconds <= 0 {
+                                    print("Attempting to play delayed sound for: \(timer.label)")
+                                    playSound(at: index)
+                                    
+                                    // Also try to play the sound multiple times to ensure it's heard
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                        if self.activeTimers.indices.contains(index) && self.activeTimers[index].audioPlayer == nil {
+                                            print("Retrying sound playback for: \(timer.label)")
+                                            self.playSound(at: index)
+                                        }
+                                    }
+                                }
+                            }
+                        } catch {
+                            print("Failed to reconfigure audio session: \(error)")
+                        }
+                    }
+                case .inactive:
+                    print("App becoming inactive")
+                @unknown default:
+                    break
+                }
             }
         }
     }
@@ -253,7 +311,6 @@ struct ContentView: View {
             ringtone: selectedRingtone
         )
         
-        startLiveActivity(for: &newTimer)
         activeTimers.append(newTimer)
         scheduleNotification(for: newTimer)
         resetSetup()
@@ -268,7 +325,6 @@ struct ContentView: View {
             ringtone: selectedRingtone
         )
         
-        startLiveActivity(for: &newTimer)
         activeTimers.append(newTimer)
         scheduleNotification(for: newTimer)
     }
@@ -286,7 +342,6 @@ struct ContentView: View {
         )
         
         stopSoundAndRemove(id: id)
-        startLiveActivity(for: &newTimer)
         activeTimers.append(newTimer)
         scheduleNotification(for: newTimer)
     }
@@ -308,7 +363,6 @@ struct ContentView: View {
             ringtone: ringtone
         )
         
-        startLiveActivity(for: &newTimer)
         activeTimers.append(newTimer)
         scheduleNotification(for: newTimer)
     }
@@ -318,9 +372,6 @@ struct ContentView: View {
             activeTimers[index].isPaused.toggle()
             if activeTimers[index].isPaused {
                 cancelNotification(for: id)
-                Task {
-                    await activeTimers[index].activity?.end(dismissalPolicy: .immediate)
-                }
             } else {
                 scheduleNotification(for: activeTimers[index])
             }
@@ -336,15 +387,13 @@ struct ContentView: View {
             if activeTimers[index].remainingSeconds > 0 {
                 activeTimers[index].remainingSeconds -= 1
             } else if activeTimers[index].audioPlayer == nil {
-                if scenePhase == .active {
-                    playSound(at: index)
-                    cancelNotification(for: activeTimers[index].id)
-                    
-                    if activeTimers[index].ringDuration != Double.infinity {
-                        let timerId = activeTimers[index].id
-                        DispatchQueue.main.asyncAfter(deadline: .now() + activeTimers[index].ringDuration) {
-                            stopSoundAndRemove(id: timerId)
-                        }
+                playSound(at: index)
+                cancelNotification(for: activeTimers[index].id)
+                
+                if activeTimers[index].ringDuration != Double.infinity {
+                    let timerId = activeTimers[index].id
+                    DispatchQueue.main.asyncAfter(deadline: .now() + activeTimers[index].ringDuration) {
+                        stopSoundAndRemove(id: timerId)
                     }
                 }
             }
@@ -357,24 +406,30 @@ struct ContentView: View {
             cancelNotification(for: id)
             stopSoundAndRemove(id: id)
         }
+        if activeTimers.isEmpty {
+            silentPlayer?.stop()
+        }
     }
     
     private func stopSoundAndRemove(id: UUID) {
-        // Find the index of the timer to remove.
         if let index = activeTimers.firstIndex(where: { $0.id == id }) {
-            // Get the activity session *before* removing the timer from the array.
-            let activity = activeTimers[index].activity
-            
-            // Stop the sound player.
             activeTimers[index].audioPlayer?.stop()
-            
-            // Remove the timer from the array.
             activeTimers.remove(at: index)
-            
-            // Now, safely end the activity outside of the array access.
-            Task {
-                await activity?.end(dismissalPolicy: .immediate)
+        }
+        
+        // Only deactivate audio session if no timers are playing sounds
+        if activeTimers.allSatisfy({ $0.audioPlayer == nil }) {
+            do {
+                try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+                print("Audio session deactivated")
+            } catch {
+                print("Failed to deactivate audio session: \(error)")
             }
+        }
+        
+        if activeTimers.isEmpty {
+            silentPlayer?.stop()
+            print("All timers stopped, silent player stopped")
         }
     }
     
@@ -393,21 +448,35 @@ struct ContentView: View {
     }
     
     // MARK: - Live Activity & Notification Functions
-    private func startLiveActivity(for timer: inout ActiveTimer) {
-        let attributes = TimerActivityAttributes(timerName: timer.label)
-        let state = TimerActivityAttributes.ContentState(endTime: .now + TimeInterval(timer.remainingSeconds))
-        
-        do {
-            let activity = try Activity<TimerActivityAttributes>.request(
-                attributes: attributes,
-                contentState: state,
-                pushType: nil)
-            timer.activity = activity // Store the activity session
-            print("Live Activity started: \(activity.id)")
-        } catch (let error) {
-            print("Error starting Live Activity: \(error.localizedDescription)")
+    
+    private func checkNotificationPermissions() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                switch settings.authorizationStatus {
+                case .notDetermined:
+                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
+                        if success {
+                            print("Notification permission granted")
+                        } else if let error = error {
+                            print("Notification permission error: \(error.localizedDescription)")
+                        }
+                    }
+                case .denied:
+                    print("Notification permission denied")
+                case .authorized:
+                    print("Notification permission already authorized")
+                case .provisional:
+                    print("Notification permission provisional")
+                case .ephemeral:
+                    print("Notification permission ephemeral")
+                @unknown default:
+                    break
+                }
+            }
         }
     }
+    
+
     
     private func playSound(at index: Int) {
         guard activeTimers.indices.contains(index) else { return }
@@ -418,44 +487,176 @@ struct ContentView: View {
             return
         }
         
+        // ALWAYS schedule notification first - this is the most reliable method
+        scheduleLocalNotificationFallback(for: timer)
+        
+        // Start background task to keep app alive for audio playback
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "TimerAudio") {
+            UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
+            self.backgroundTaskID = .invalid
+        }
+        
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
+            // Configure audio session for background playback
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [])
+            try audioSession.setActive(true)
             
             let audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
             audioPlayer.numberOfLoops = -1
+            audioPlayer.volume = 1.0
+            audioPlayer.prepareToPlay()
             audioPlayer.play()
             activeTimers[index].audioPlayer = audioPlayer
+            
+            print("✅ SUCCESS: Playing sound: \(timer.ringtone.fileName)")
+            
+            // End background task after a delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + timer.ringDuration) {
+                if self.backgroundTaskID != .invalid {
+                    UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
+                    self.backgroundTaskID = .invalid
+                }
+            }
+            
         } catch {
-            print("Failed to play sound: \(error.localizedDescription)")
+            print("❌ FAILED: Audio session error: \(error.localizedDescription)")
+            print("📱 Using notification fallback instead")
+            
+            // Try system sound as last resort
+            AudioServicesPlaySystemSound(1005) // Default notification sound
+            print("🔔 Played system notification sound")
+            
+            // End background task on error
+            if backgroundTaskID != .invalid {
+                UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                backgroundTaskID = .invalid
+            }
+        }
+    }
+    
+    private func playSilentSound() {
+        guard let soundURL = Bundle.main.url(forResource: "silence", withExtension: "mp3") else {
+            print("Silent sound file not found.")
+            return
+        }
+        
+        // Start background task for silent sound
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "SilentAudio") {
+            UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
+            self.backgroundTaskID = .invalid
+        }
+        
+        do {
+            // Configure audio session for background playback
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [])
+            
+            // Always try to activate
+            try audioSession.setActive(true)
+            
+            silentPlayer = try AVAudioPlayer(contentsOf: soundURL)
+            silentPlayer?.numberOfLoops = -1
+            silentPlayer?.volume = 0.0
+            silentPlayer?.prepareToPlay()
+            silentPlayer?.play()
+            
+            print("Playing silent sound to keep app alive in background")
+        } catch {
+            print("Failed to play silent sound: \(error.localizedDescription)")
+            // If silent sound fails, we'll rely on notifications
+            if backgroundTaskID != .invalid {
+                UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                backgroundTaskID = .invalid
+            }
+        }
+    }
+
+    
+    private func scheduleLocalNotificationFallback(for timer: ActiveTimer) {
+        // Create an immediate notification with multiple alerts
+        let content = UNMutableNotificationContent()
+        content.title = timer.label
+        content.body = "Time's up!"
+        
+        // Try to use custom ringtone in notification
+        let customSound = UNNotificationSound(named: UNNotificationSoundName(rawValue: timer.ringtone.fileName))
+        content.sound = customSound
+        
+        content.badge = 1
+        content.categoryIdentifier = "TIMER_ACTIONS"
+        
+        // Add user info for restart functionality
+        content.userInfo = [
+            "totalSeconds": timer.totalSeconds,
+            "label": timer.label,
+            "ringtone": timer.ringtone.rawValue,
+            "shouldPlaySound": true
+        ]
+        
+        // Schedule multiple notifications to ensure user hears it
+        for i in 0..<3 {
+            let delay = max(0.1, TimeInterval(i * 2))
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
+            let request = UNNotificationRequest(identifier: "fallback-\(timer.id.uuidString)-\(i)", content: content, trigger: trigger)
+            
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("Fallback notification \(i) failed: \(error.localizedDescription)")
+                } else {
+                    print("Fallback notification \(i) scheduled for: \(timer.label)")
+                }
+            }
         }
     }
     
     private func scheduleNotification(for timer: ActiveTimer) {
-        let content = UNMutableNotificationContent()
-        content.title = timer.label
-        content.body = "Time's up!"
-        content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: timer.ringtone.fileName))
-        content.categoryIdentifier = "TIMER_ACTIONS"
-        
-        content.userInfo = [
-            "totalSeconds": timer.totalSeconds,
-            "label": timer.label,
-            "ringtone": timer.ringtone.rawValue
-        ]
+        // Schedule multiple notifications to ensure user hears it
+        for i in 0..<5 {
+            let content = UNMutableNotificationContent()
+            content.title = timer.label
+            content.body = "Time's up!"
+            
+            // Try to use custom ringtone in notification
+            let customSound = UNNotificationSound(named: UNNotificationSoundName(rawValue: timer.ringtone.fileName))
+            content.sound = customSound
+            
+            content.categoryIdentifier = "TIMER_ACTIONS"
+            content.badge = 1
+            
+            content.userInfo = [
+                "totalSeconds": timer.totalSeconds,
+                "label": timer.label,
+                "ringtone": timer.ringtone.rawValue,
+                "shouldPlaySound": true
+            ]
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(timer.remainingSeconds), repeats: false)
-        let request = UNNotificationRequest(identifier: timer.id.uuidString, content: content, trigger: trigger)
+            // Schedule notifications at different intervals
+            let delay = max(1.0, TimeInterval(timer.remainingSeconds + (i * 2)))
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
+            let request = UNNotificationRequest(identifier: "\(timer.id.uuidString)-\(i)", content: content, trigger: trigger)
 
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Error scheduling notification: \(error.localizedDescription)")
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("Error scheduling notification \(i): \(error.localizedDescription)")
+                } else {
+                    print("Notification \(i) scheduled successfully for timer: \(timer.label) in \(delay) seconds")
+                }
             }
         }
     }
     
     private func cancelNotification(for id: UUID) {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id.uuidString])
+        // Cancel all notifications for this timer (including multiple scheduled ones)
+        var identifiers: [String] = []
+        for i in 0..<5 {
+            identifiers.append("\(id.uuidString)-\(i)")
+        }
+        identifiers.append("fallback-\(id.uuidString)-0")
+        identifiers.append("fallback-\(id.uuidString)-1")
+        identifiers.append("fallback-\(id.uuidString)-2")
+        
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 }
 

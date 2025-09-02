@@ -1,4 +1,4 @@
-import SwiftUI
+import UIKit
 import UserNotifications
 import AVFoundation
 
@@ -23,9 +23,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // 5. Request permission from the user
         requestNotificationAuthorization()
 
-        // Allow audio to play in silent mode
+        // Configure audio session for background playback
+        let audioSession = AVAudioSession.sharedInstance()
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback)
+            try audioSession.setCategory(.playback, mode: .default, options: [])
+            try audioSession.setActive(true)
         } catch {
             print("Failed to set audio session category: \(error)")
         }
@@ -60,5 +62,13 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [response.notification.request.identifier])
         
         completionHandler()
+    }
+    
+    // Handle notifications when app is in foreground
+    func userNotificationCenter(_ center: UNUserNotificationCenter, 
+                              willPresent notification: UNNotification, 
+                              withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        // Show notification even when app is in foreground
+        completionHandler([.banner, .sound, .badge])
     }
 }
