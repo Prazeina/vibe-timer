@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 90;
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +29,23 @@
 		B2B5B9D12E612DDA00B23E22 /* TimerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B2A08F6D2E62A43500CD6239 /* Exceptions for "TimerTests" folder in "TimerTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B2B5B9C62E612DDA00B23E22 /* TimerTests */;
+		};
+		B2A08F6F2E62A44D00CD6239 /* Exceptions for "TimerUITests" folder in "TimerUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B2B5B9D02E612DDA00B23E22 /* TimerUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B2B5B9BB2E612DD900B23E22 /* Timer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -37,11 +54,17 @@
 		};
 		B2B5B9CA2E612DDA00B23E22 /* TimerTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B2A08F6D2E62A43500CD6239 /* Exceptions for "TimerTests" folder in "TimerTests" target */,
+			);
 			path = TimerTests;
 			sourceTree = "<group>";
 		};
 		B2B5B9D42E612DDA00B23E22 /* TimerUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B2A08F6F2E62A44D00CD6239 /* Exceptions for "TimerUITests" folder in "TimerUITests" target */,
+			);
 			path = TimerUITests;
 			sourceTree = "<group>";
 		};
@@ -50,24 +73,18 @@
 /* Begin PBXFrameworksBuildPhase section */
 		B2B5B9B62E612DD900B23E22 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B2B5B9C42E612DDA00B23E22 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B2B5B9CE2E612DDA00B23E22 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -105,14 +122,10 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			fileSystemSynchronizedGroups = (
 				B2B5B9BB2E612DD900B23E22 /* Timer */,
 			);
 			name = Timer;
-			packageProductDependencies = (
-			);
 			productName = Timer;
 			productReference = B2B5B9B92E612DD900B23E22 /* Timer.app */;
 			productType = "com.apple.product-type.application";
@@ -134,8 +147,6 @@
 				B2B5B9CA2E612DDA00B23E22 /* TimerTests */,
 			);
 			name = TimerTests;
-			packageProductDependencies = (
-			);
 			productName = TimerTests;
 			productReference = B2B5B9C72E612DDA00B23E22 /* TimerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -157,8 +168,6 @@
 				B2B5B9D42E612DDA00B23E22 /* TimerUITests */,
 			);
 			name = TimerUITests;
-			packageProductDependencies = (
-			);
 			productName = TimerUITests;
 			productReference = B2B5B9D12E612DDA00B23E22 /* TimerUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -195,7 +204,7 @@
 			);
 			mainGroup = B2B5B9B02E612DD900B23E22;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
+			preferredProjectObjectVersion = 90;
 			productRefGroup = B2B5B9BA2E612DD900B23E22 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -210,48 +219,36 @@
 /* Begin PBXResourcesBuildPhase section */
 		B2B5B9B72E612DD900B23E22 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B2B5B9C52E612DDA00B23E22 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B2B5B9CF2E612DDA00B23E22 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		B2B5B9B52E612DD900B23E22 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B2B5B9C32E612DDA00B23E22 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B2B5B9CD2E612DDA00B23E22 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -269,7 +266,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		B2B5B9D92E612DDA00B23E22 /* Debug */ = {
+		B2B5B9D92E612DDA00B23E22 /* Debug configuration for PBXProject "Timer" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -330,7 +327,7 @@
 			};
 			name = Debug;
 		};
-		B2B5B9DA2E612DDA00B23E22 /* Release */ = {
+		B2B5B9DA2E612DDA00B23E22 /* Release configuration for PBXProject "Timer" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -383,7 +380,7 @@
 			};
 			name = Release;
 		};
-		B2B5B9DC2E612DDA00B23E22 /* Debug */ = {
+		B2B5B9DC2E612DDA00B23E22 /* Debug configuration for PBXNativeTarget "Timer" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -409,7 +406,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MACOSX_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.prajeena.Timer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -424,7 +421,7 @@
 			};
 			name = Debug;
 		};
-		B2B5B9DD2E612DDA00B23E22 /* Release */ = {
+		B2B5B9DD2E612DDA00B23E22 /* Release configuration for PBXNativeTarget "Timer" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -450,7 +447,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MACOSX_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.prajeena.Timer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -465,13 +462,14 @@
 			};
 			name = Release;
 		};
-		B2B5B9DF2E612DDA00B23E22 /* Debug */ = {
+		B2B5B9DF2E612DDA00B23E22 /* Debug configuration for PBXNativeTarget "TimerTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TimerTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
@@ -487,13 +485,14 @@
 			};
 			name = Debug;
 		};
-		B2B5B9E02E612DDA00B23E22 /* Release */ = {
+		B2B5B9E02E612DDA00B23E22 /* Release configuration for PBXNativeTarget "TimerTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TimerTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
@@ -509,12 +508,13 @@
 			};
 			name = Release;
 		};
-		B2B5B9E22E612DDA00B23E22 /* Debug */ = {
+		B2B5B9E22E612DDA00B23E22 /* Debug configuration for PBXNativeTarget "TimerUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TimerUITests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
@@ -530,12 +530,13 @@
 			};
 			name = Debug;
 		};
-		B2B5B9E32E612DDA00B23E22 /* Release */ = {
+		B2B5B9E32E612DDA00B23E22 /* Release configuration for PBXNativeTarget "TimerUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TimerUITests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
@@ -557,37 +558,33 @@
 		B2B5B9B42E612DD900B23E22 /* Build configuration list for PBXProject "Timer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B2B5B9D92E612DDA00B23E22 /* Debug */,
-				B2B5B9DA2E612DDA00B23E22 /* Release */,
+				B2B5B9D92E612DDA00B23E22 /* Debug configuration for PBXProject "Timer" */,
+				B2B5B9DA2E612DDA00B23E22 /* Release configuration for PBXProject "Timer" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		B2B5B9DB2E612DDA00B23E22 /* Build configuration list for PBXNativeTarget "Timer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B2B5B9DC2E612DDA00B23E22 /* Debug */,
-				B2B5B9DD2E612DDA00B23E22 /* Release */,
+				B2B5B9DC2E612DDA00B23E22 /* Debug configuration for PBXNativeTarget "Timer" */,
+				B2B5B9DD2E612DDA00B23E22 /* Release configuration for PBXNativeTarget "Timer" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		B2B5B9DE2E612DDA00B23E22 /* Build configuration list for PBXNativeTarget "TimerTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B2B5B9DF2E612DDA00B23E22 /* Debug */,
-				B2B5B9E02E612DDA00B23E22 /* Release */,
+				B2B5B9DF2E612DDA00B23E22 /* Debug configuration for PBXNativeTarget "TimerTests" */,
+				B2B5B9E02E612DDA00B23E22 /* Release configuration for PBXNativeTarget "TimerTests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		B2B5B9E12E612DDA00B23E22 /* Build configuration list for PBXNativeTarget "TimerUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B2B5B9E22E612DDA00B23E22 /* Debug */,
-				B2B5B9E32E612DDA00B23E22 /* Release */,
+				B2B5B9E22E612DDA00B23E22 /* Debug configuration for PBXNativeTarget "TimerUITests" */,
+				B2B5B9E32E612DDA00B23E22 /* Release configuration for PBXNativeTarget "TimerUITests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
